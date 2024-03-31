@@ -10,6 +10,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -23,17 +24,37 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/api/v1/auth/**")
-                .permitAll()
-                .anyRequest()
-                .authenticated()
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .authorizeHttpRequests((requests) -> {
+                    try {
+                        requests
+                                .requestMatchers( new AntPathRequestMatcher("swagger-ui/**")).permitAll()
+                                .requestMatchers( new AntPathRequestMatcher("/swagger-ui/**")).permitAll()
+                                .requestMatchers( new AntPathRequestMatcher("v3/api-docs/**")).permitAll()
+                                .requestMatchers( new AntPathRequestMatcher("/v3/api-docs/**")).permitAll()
+                                .requestMatchers("/api/v1/auth/**").permitAll()
+                                .anyRequest().authenticated()
+                                .and()
+                                .sessionManagement()
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                                .and()
+                                .authenticationProvider(authenticationProvider)
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+//        http.csrf().disable()
+//                .authorizeHttpRequests()
+//                .requestMatchers("/api/v1/auth/**")
+//                .permitAll()
+//                .anyRequest()
+//                .authenticated()
+//                .and()
+//                .sessionManagement()
+//                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+//                .and()
+//                .authenticationProvider(authenticationProvider)
+//                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
